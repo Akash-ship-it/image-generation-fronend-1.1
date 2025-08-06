@@ -15,12 +15,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  HelpCircle, 
-  Download, 
-  Copy, 
-  Sparkles, 
-  Settings, 
+import {
+  HelpCircle,
+  Download,
+  Copy,
+  Sparkles,
+  Settings,
   Image as ImageIcon,
   Loader2,
   AlertCircle,
@@ -61,7 +61,7 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [theme, setTheme] = useState('dark');
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedImage, setGeneratedImage] = useState<any>(null);
@@ -84,7 +84,7 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (!prompt.trim()) {
       setError('Please enter a prompt');
       return;
@@ -142,11 +142,18 @@ export default function Home() {
   };
 
   const resetToDefaults = () => {
+    setPrompt('');
+    setNegativePrompt('');
     setSteps([30]);
     setGuidance([7.5]);
     setWidth([1024]);
     setHeight([1024]);
     setSeed(-1);
+    setError('');
+    setGeneratedImage(null);
+    setProgress(0);
+    setCopied(false);
+    setLiked(false);
   };
 
   const downloadImage = async () => {
@@ -191,7 +198,7 @@ export default function Home() {
     },
     {
       icon: Bot,
-      title: "Cyberpunk Noir", 
+      title: "Cyberpunk Noir",
       description: "Neon lights, future city",
       prompt: "A dystopian cyberpunk cityscape with towering neon-lit skyscrapers, flying cars, rain-soaked streets, blade runner aesthetic, moody lighting",
       category: "sci-fi"
@@ -295,7 +302,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Transform your wildest imagination into stunning visual masterpieces with cutting-edge AI technology. 
+                Transform your wildest imagination into stunning visual masterpieces with cutting-edge AI technology.
                 <span className="font-semibold text-foreground"> Create, customize, and download in seconds.</span>
               </p>
               <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
@@ -338,7 +345,7 @@ export default function Home() {
                     </Button>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="space-y-6">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Prompt Section */}
@@ -379,7 +386,7 @@ export default function Home() {
                         {prompt.length} characters
                       </div>
                     </div>
-                    
+
                     {/* Negative Prompt */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
@@ -422,7 +429,7 @@ export default function Home() {
                           Advanced
                         </TabsTrigger>
                       </TabsList>
-                      
+
                       <TabsContent value="basic" className="space-y-6 mt-6">
                         {/* Aspect Ratio Selection */}
                         <div className="space-y-4">
@@ -494,7 +501,7 @@ export default function Home() {
                           </div>
                         </div>
                       </TabsContent>
-                      
+
                       <TabsContent value="advanced" className="space-y-6 mt-6">
                         {/* Fine-tuned Controls */}
                         <div className="space-y-6">
@@ -529,7 +536,7 @@ export default function Home() {
                               <span>100 (60s)</span>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-4">
                             <div className="flex items-center gap-2">
                               <Label className="text-sm font-medium">
@@ -561,7 +568,7 @@ export default function Home() {
                               <span>Precise</span>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-4">
                             <div className="flex items-center gap-2">
                               <Label htmlFor="seed" className="text-sm font-medium">
@@ -590,9 +597,9 @@ export default function Home() {
                         </div>
                       </TabsContent>
                     </Tabs>
-                    
+
                     <Separator />
-                    
+
                     {/* Generate Button */}
                     <div className="space-y-4">
                       {isLoading && (
@@ -604,7 +611,7 @@ export default function Home() {
                           <Progress value={progress} className="h-2" />
                         </div>
                       )}
-                      
+
                       <Button
                         type="submit"
                         disabled={isLoading || !prompt.trim()}
@@ -624,7 +631,7 @@ export default function Home() {
                       </Button>
                     </div>
                   </form>
-                  
+
                   {/* Error Display */}
                   {error && (
                     <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
@@ -681,7 +688,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Image Display Panel */}
             <div className="xl:col-span-2">
               <Card className="shadow-2xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl h-full">
@@ -715,7 +722,7 @@ export default function Home() {
                     )}
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="p-6">
                   <div className="relative aspect-square bg-gradient-to-br from-muted/50 to-muted/80 rounded-2xl overflow-hidden border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40 transition-all duration-300">
                     {isLoading ? (
@@ -740,16 +747,16 @@ export default function Home() {
                       </div>
                     ) : generatedImage ? (
                       <div className="h-full relative group">
-                        <img 
-                          src={generatedImage.cloudinary_url} 
+                        <img
+                          src={generatedImage.cloudinary_url}
                           alt={generatedImage.prompt}
                           className="w-full h-full object-contain hover:scale-105 transition-transform duration-500 cursor-pointer"
                           onClick={openImageModal}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-2xl">
                           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <Button 
-                              variant="secondary" 
+                            <Button
+                              variant="secondary"
                               size="sm"
                               onClick={openImageModal}
                               className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 shadow-lg"
@@ -790,7 +797,7 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Image Info and Actions */}
                   {generatedImage && (
                     <div className="mt-8 space-y-6">
@@ -835,7 +842,7 @@ export default function Home() {
                           </div>
                         </CardContent>
                       </Card>
-                      
+
                       {/* Action Buttons */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <Button
@@ -845,7 +852,7 @@ export default function Home() {
                           <Download className="w-5 h-5 mr-2 group-hover:animate-bounce" />
                           Download HD
                         </Button>
-                        
+
                         <Button
                           onClick={copyToClipboard}
                           variant="outline"
@@ -863,19 +870,19 @@ export default function Home() {
                             </>
                           )}
                         </Button>
-                        
+
                         <Button
                           variant="outline"
                           className="h-12 hover:bg-purple-50 dark:hover:bg-purple-950 hover:border-purple-300 transition-all duration-200 group cursor-pointer"
                           onClick={() => {
-                            handleSubmit({ preventDefault: () => {} } as FormEvent);
+                            handleSubmit({ preventDefault: () => { } } as FormEvent);
                           }}
                         >
                           <Shuffle className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-300" />
                           Variation
                         </Button>
                       </div>
-                      
+
                       {/* Stats */}
                       <div className="flex items-center justify-center gap-6 py-4 text-sm text-muted-foreground border-t border-muted/50">
                         <div className="flex items-center gap-2">
@@ -897,7 +904,7 @@ export default function Home() {
               </Card>
             </div>
           </div>
-          
+
           {/* Bottom Stats Section */}
           <div className="mt-16 text-center">
             <div className="max-w-4xl mx-auto">
@@ -925,103 +932,175 @@ export default function Home() {
         </div>
 
         {/* Image Modal */}
+        {/* Image Modal */}
         <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-          <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 dark:bg-gray-950/95 backdrop-blur-xl border-0 shadow-2xl">
+          <DialogContent className="max-w-[95vw] w-full h-[95vh] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl md:h-[90vh] p-0 bg-background/98 dark:bg-gray-950/98 backdrop-blur-2xl border shadow-2xl overflow-hidden">
             <div className="relative h-full w-full flex flex-col">
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 border-b border-border/50">
-                <DialogHeader className="flex-1">
-                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    AI Generated Masterpiece
+              <div className="flex items-start justify-between p-3 sm:p-4 lg:p-6 border-b border-border/20 bg-gradient-to-r from-background/50 to-muted/20">
+                <div className="flex-1 min-w-0 pr-3 sm:pr-4">
+                  <DialogTitle className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-foreground mb-1 sm:mb-2 flex items-center gap-2">
+                    <div className="p-1 sm:p-1.5 bg-primary/10 rounded-lg">
+                      <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-primary" />
+                    </div>
+                    AI Generated Image
                   </DialogTitle>
-                  <p className="text-muted-foreground mt-2">
-                    {generatedImage?.prompt?.slice(0, 100)}...
+                  <p className="text-xs sm:text-sm lg:text-base text-muted-foreground line-clamp-2 leading-relaxed">
+                    {generatedImage?.prompt || "Your AI-generated masterpiece"}
                   </p>
-                </DialogHeader>
-                <div className="flex items-center gap-3">
+                </div>
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                   <Button
                     onClick={downloadImage}
-                    className="bg-green-600 hover:bg-green-700 shadow-lg"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline lg:inline">Download</span>
                   </Button>
                   <Button
                     onClick={() => setIsImageModalOpen(false)}
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-muted/80"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
-              
+
               {/* Modal Body */}
-              <div className="flex-1 p-6 overflow-hidden">
-                <div className="h-full w-full flex items-center justify-center">
-                  {generatedImage && (
-                    <div className="relative max-w-full max-h-full">
-                      <img 
-                        src={generatedImage.cloudinary_url} 
-                        alt={generatedImage.prompt}
-                        className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
-                        style={{ maxHeight: 'calc(90vh - 200px)' }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent rounded-xl pointer-events-none"></div>
-                    </div>
-                  )}
+              <div className="flex-1 overflow-hidden bg-gradient-to-br from-muted/10 via-background to-muted/20">
+                <div className="h-full w-full p-2 sm:p-4 lg:p-6">
+                  <div className="h-full w-full flex items-center justify-center">
+                    {generatedImage && (
+                      <div className="relative w-full h-full flex items-center justify-center group">
+                        <div className="relative overflow-hidden rounded-lg sm:rounded-xl shadow-2xl bg-white dark:bg-gray-900 p-1 sm:p-2 max-w-full max-h-full">
+                          <img
+                            src={generatedImage.cloudinary_url}
+                            alt={generatedImage.prompt}
+                            className="w-full h-full object-contain rounded-md sm:rounded-lg"
+                            style={{
+                              maxHeight: 'calc(95vh - 120px)',
+                              maxWidth: '100%'
+                            }}
+                          />
+                          {/* Image overlay for aesthetic effect */}
+                          <div className="absolute inset-1 sm:inset-2 rounded-md sm:rounded-lg bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                        </div>
+
+                        {/* Floating action buttons - only show on larger screens */}
+                        <div className="hidden lg:flex absolute top-4 right-4 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setLiked(!liked)}
+                            className={`backdrop-blur-sm shadow-lg ${liked ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800" : "bg-white/90 dark:bg-gray-900/90"}`}
+                          >
+                            <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={copyToClipboard}
+                            className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 shadow-lg"
+                          >
+                            {copied ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              
+
               {/* Modal Footer */}
-              <div className="border-t border-border/50 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <Badge variant="outline">
+              <div className="border-t border-border/20 bg-gradient-to-r from-background/80 to-muted/40 backdrop-blur-sm">
+                <div className="p-3 sm:p-4 lg:p-6">
+                  {/* Generation Details */}
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 sm:mb-4">
+                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                      <ImageIcon className="h-3 w-3 mr-1" />
                       {width[0]}×{height[0]}
                     </Badge>
-                    <Badge variant="outline">
+                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                      <Settings className="h-3 w-3 mr-1" />
                       {steps[0]} steps
                     </Badge>
-                    <Badge variant="outline">
+                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                      <Wand2 className="h-3 w-3 mr-1" />
                       Guidance: {guidance[0]}
                     </Badge>
                     {seed !== -1 && (
-                      <Badge variant="outline">
+                      <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                        <Shuffle className="h-3 w-3 mr-1" />
                         Seed: {seed}
                       </Badge>
                     )}
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                      Generated
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => setLiked(!liked)}
-                      className={liked ? "text-red-500 border-red-200" : ""}
-                    >
-                      <Heart className={`h-4 w-4 mr-2 ${liked ? "fill-current" : ""}`} />
-                      {liked ? "Liked" : "Like"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={copyToClipboard}
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy Link
-                        </>
-                      )}
-                    </Button>
-                    <Button variant="outline">
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-wrap w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLiked(!liked)}
+                        className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${liked
+                            ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
+                            : "hover:bg-muted/80"
+                          }`}
+                      >
+                        <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${liked ? "fill-current" : ""}`} />
+                        <span>{liked ? "Liked" : "Like"}</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyToClipboard}
+                        className="hover:bg-blue-50 dark:hover:bg-blue-950 hover:border-blue-200 transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none"
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-green-500" />
+                            <span className="text-green-600">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                            <span>Copy Link</span>
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="hover:bg-purple-50 dark:hover:bg-purple-950 hover:border-purple-200 transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none"
+                      >
+                        <Share2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span>Share</span>
+                      </Button>
+                    </div>
+
+                    {/* Generation Stats */}
+                    <div className="flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground w-full sm:w-auto justify-center sm:justify-end">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Generated in {Math.floor(Math.random() * 30 + 15)}s</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        <span>{Math.floor(Math.random() * 20 + 80)}% Quality</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1030,4 +1109,5 @@ export default function Home() {
         </Dialog>
       </div>
     </TooltipProvider>
-  )};
+  )
+};
