@@ -339,7 +339,7 @@ export default function Home() {
                         <CardDescription>Craft your perfect image</CardDescription>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={resetToDefaults}>
+                    <Button variant="outline" size="sm" onClick={resetToDefaults} className='cursor-pointer'>
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Reset
                     </Button>
@@ -1055,8 +1055,8 @@ export default function Home() {
                         size="sm"
                         onClick={() => setLiked(!liked)}
                         className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${liked
-                            ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
-                            : "hover:bg-muted/80"
+                          ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
+                          : "hover:bg-muted/80"
                           }`}
                       >
                         <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${liked ? "fill-current" : ""}`} />
