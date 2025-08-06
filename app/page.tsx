@@ -287,7 +287,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-2">
                   <h1 className="text-6xl font-black bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
-                    AI Studio
+                    ChitraKar
                   </h1>
                   <div className="flex items-center gap-2 justify-center">
                     <Badge variant="secondary" className="px-3 py-1">
@@ -296,7 +296,7 @@ export default function Home() {
                     </Badge>
                     <Badge variant="outline" className="px-3 py-1">
                       <TrendingUp className="h-3 w-3 mr-1" />
-                      Latest AI By <strong>Akash More</strong>
+                      Project #1 By <strong>Akash More</strong>
                     </Badge>
                   </div>
                 </div>
@@ -701,7 +701,7 @@ export default function Home() {
                       <div>
                         <CardTitle className="text-xl">Your Masterpiece</CardTitle>
                         <CardDescription>
-                          AI-generated artwork appears here
+                          ChitraKar generated artwork appears here
                         </CardDescription>
                       </div>
                     </div>
@@ -777,7 +777,7 @@ export default function Home() {
                           </div>
                           <div className="space-y-3">
                             <p className="text-2xl font-semibold text-foreground">Ready to create?</p>
-                            <p className="text-lg">Enter your prompt and let AI work its magic</p>
+                            <p className="text-lg">Enter your prompt and let ChitraKar work its magic</p>
                             <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Zap className="h-4 w-4 text-yellow-500" />
@@ -943,10 +943,10 @@ export default function Home() {
                     <div className="p-1 sm:p-1.5 bg-primary/10 rounded-lg">
                       <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-primary" />
                     </div>
-                    AI Generated Image
+                    ChitraKar Generated Image
                   </DialogTitle>
                   <p className="text-xs sm:text-sm lg:text-base text-muted-foreground line-clamp-2 leading-relaxed">
-                    {generatedImage?.prompt || "Your AI-generated masterpiece"}
+                    {generatedImage?.prompt || "Your ChitraKar generated masterpiece"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
