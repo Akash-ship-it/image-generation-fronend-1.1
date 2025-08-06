@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   HelpCircle, 
   Download, 
@@ -40,7 +41,11 @@ import {
   Maximize,
   RotateCcw,
   Camera,
-  Brush
+  Brush,
+  X,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
 
 export default function Home() {
@@ -54,17 +59,28 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [liked, setLiked] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [theme, setTheme] = useState('dark');
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [generatedImage, setGeneratedImage] = useState<ImageGenerationResponse | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<any>(null);
 
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    // Apply theme to document
+    document.documentElement.classList.toggle('dark', theme === 'dark');
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
+  const toggleTheme = (newTheme: string) => {
+    setTheme(newTheme);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -91,7 +107,7 @@ export default function Home() {
     }, 1000);
 
     try {
-      const request: ImageGenerationRequest = {
+      const request = {
         prompt: prompt.trim(),
         negative_prompt: negativePrompt.trim() || undefined,
         num_inference_steps: steps[0],
@@ -161,6 +177,10 @@ export default function Home() {
     }
   };
 
+  const openImageModal = () => {
+    setIsImageModalOpen(true);
+  };
+
   const quickPrompts = [
     {
       icon: Castle,
@@ -215,12 +235,42 @@ export default function Home() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background dark:bg-gray-950 transition-colors duration-300">
         {/* Hero Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/10 to-secondary/5 border-b">
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/10 to-secondary/5 dark:from-primary/10 dark:via-primary/20 dark:to-secondary/10 border-b dark:border-gray-800">
           <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
           <div className="relative container mx-auto px-4 py-16">
             <div className="text-center space-y-6 max-w-4xl mx-auto">
+              {/* Theme Toggle */}
+              <div className="absolute top-4 right-4">
+                <div className="flex items-center bg-background/80 dark:bg-gray-900/80 backdrop-blur-xl border border-border/50 rounded-full p-1 shadow-lg">
+                  <Button
+                    variant={theme === 'light' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => toggleTheme('light')}
+                    className="rounded-full h-8 w-8 p-0"
+                  >
+                    <Sun className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={theme === 'dark' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => toggleTheme('dark')}
+                    className="rounded-full h-8 w-8 p-0"
+                  >
+                    <Moon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={theme === 'system' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => toggleTheme('system')}
+                    className="rounded-full h-8 w-8 p-0"
+                  >
+                    <Monitor className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl"></div>
@@ -270,7 +320,7 @@ export default function Home() {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {/* Controls Panel */}
             <div className="xl:col-span-1 space-y-6">
-              <Card className="shadow-2xl border-0 bg-card/50 backdrop-blur-xl">
+              <Card className="shadow-2xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl">
                 <CardHeader className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -586,7 +636,7 @@ export default function Home() {
               </Card>
 
               {/* Quick Prompts */}
-              <Card className="shadow-xl border-0 bg-card/50 backdrop-blur-xl">
+              <Card className="shadow-xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Palette className="h-5 w-5" />
@@ -634,7 +684,7 @@ export default function Home() {
             
             {/* Image Display Panel */}
             <div className="xl:col-span-2">
-              <Card className="shadow-2xl border-0 bg-card/50 backdrop-blur-xl h-full">
+              <Card className="shadow-2xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl h-full">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -694,11 +744,16 @@ export default function Home() {
                           src={generatedImage.cloudinary_url} 
                           alt={generatedImage.prompt}
                           className="w-full h-full object-contain hover:scale-105 transition-transform duration-500 cursor-pointer"
-                          onClick={() => window.open(generatedImage.cloudinary_url, '_blank')}
+                          onClick={openImageModal}
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-2xl">
                           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <Button variant="secondary" size="sm">
+                            <Button 
+                              variant="secondary" 
+                              size="sm"
+                              onClick={openImageModal}
+                              className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 shadow-lg"
+                            >
                               <Maximize className="h-4 w-4" />
                             </Button>
                           </div>
@@ -740,7 +795,7 @@ export default function Home() {
                   {generatedImage && (
                     <div className="mt-8 space-y-6">
                       {/* Image Details Card */}
-                      <Card className="bg-muted/30 border-muted/50">
+                      <Card className="bg-muted/30 dark:bg-gray-800/30 border-muted/50">
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -763,7 +818,7 @@ export default function Home() {
                               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                 Prompt Used
                               </Label>
-                              <p className="text-sm leading-relaxed mt-1 p-3 bg-background/50 rounded-lg border">
+                              <p className="text-sm leading-relaxed mt-1 p-3 bg-background/50 dark:bg-gray-950/50 rounded-lg border">
                                 {generatedImage.prompt}
                               </p>
                             </div>
@@ -772,7 +827,7 @@ export default function Home() {
                                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                   Excluded Elements
                                 </Label>
-                                <p className="text-sm text-muted-foreground mt-1 p-3 bg-background/50 rounded-lg border">
+                                <p className="text-sm text-muted-foreground mt-1 p-3 bg-background/50 dark:bg-gray-950/50 rounded-lg border">
                                   {negativePrompt}
                                 </p>
                               </div>
@@ -794,7 +849,7 @@ export default function Home() {
                         <Button
                           onClick={copyToClipboard}
                           variant="outline"
-                          className="h-12 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 group cursor-pointer"
+                          className="h-12 hover:bg-blue-50 dark:hover:bg-blue-950 hover:border-blue-300 transition-all duration-200 group cursor-pointer"
                         >
                           {copied ? (
                             <>
@@ -811,9 +866,8 @@ export default function Home() {
                         
                         <Button
                           variant="outline"
-                          className="h-12 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 group cursor-pointer"
+                          className="h-12 hover:bg-purple-50 dark:hover:bg-purple-950 hover:border-purple-300 transition-all duration-200 group cursor-pointer"
                           onClick={() => {
-                            // Use the same prompt to generate a variation
                             handleSubmit({ preventDefault: () => {} } as FormEvent);
                           }}
                         >
@@ -869,7 +923,111 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Image Modal */}
+        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+          <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-background/95 dark:bg-gray-950/95 backdrop-blur-xl border-0 shadow-2xl">
+            <div className="relative h-full w-full flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-border/50">
+                <DialogHeader className="flex-1">
+                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    AI Generated Masterpiece
+                  </DialogTitle>
+                  <p className="text-muted-foreground mt-2">
+                    {generatedImage?.prompt?.slice(0, 100)}...
+                  </p>
+                </DialogHeader>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={downloadImage}
+                    className="bg-green-600 hover:bg-green-700 shadow-lg"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                  <Button
+                    onClick={() => setIsImageModalOpen(false)}
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Modal Body */}
+              <div className="flex-1 p-6 overflow-hidden">
+                <div className="h-full w-full flex items-center justify-center">
+                  {generatedImage && (
+                    <div className="relative max-w-full max-h-full">
+                      <img 
+                        src={generatedImage.cloudinary_url} 
+                        alt={generatedImage.prompt}
+                        className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                        style={{ maxHeight: 'calc(90vh - 200px)' }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent rounded-xl pointer-events-none"></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Modal Footer */}
+              <div className="border-t border-border/50 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <Badge variant="outline">
+                      {width[0]}×{height[0]}
+                    </Badge>
+                    <Badge variant="outline">
+                      {steps[0]} steps
+                    </Badge>
+                    <Badge variant="outline">
+                      Guidance: {guidance[0]}
+                    </Badge>
+                    {seed !== -1 && (
+                      <Badge variant="outline">
+                        Seed: {seed}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setLiked(!liked)}
+                      className={liked ? "text-red-500 border-red-200" : ""}
+                    >
+                      <Heart className={`h-4 w-4 mr-2 ${liked ? "fill-current" : ""}`} />
+                      {liked ? "Liked" : "Like"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={copyToClipboard}
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Link
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="outline">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
-  );
-}
+  )};
