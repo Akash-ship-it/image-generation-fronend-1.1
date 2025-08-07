@@ -114,6 +114,13 @@
 // lib/api.ts
 // API client for interacting with the Modal backend services
 
+export interface LikedImage {
+  id: string;
+  cloudinary_url: string;
+  prompt: string;
+  timestamp: number;
+}
+
 // Types for image generation requests and responses
 export interface ImageGenerationRequest {
   prompt: string;
@@ -197,7 +204,7 @@ export async function generateImage(request: ImageGenerationRequest): Promise<Im
 export async function generateImageBatch(request: ImageBatchGenerationRequest): Promise<ImageBatchGenerationResponse> {
   try {
     console.log('Sending batch request to Modal:', ENDPOINTS.generateImageBatch);
-    
+
     const response = await fetch(ENDPOINTS.generateImageBatch, {
       method: 'POST',
       headers: {
@@ -224,10 +231,10 @@ export async function generateImageBatch(request: ImageBatchGenerationRequest): 
  * @param request The image generation request parameters
  * @returns Promise with the base64 image data
  */
-export async function generateImageBase64(request: ImageGenerationRequest): Promise<{image_data: string; prompt: string}> {
+export async function generateImageBase64(request: ImageGenerationRequest): Promise<{ image_data: string; prompt: string }> {
   try {
     console.log('Sending base64 request to Modal:', ENDPOINTS.generateImageBase64);
-    
+
     const response = await fetch(ENDPOINTS.generateImageBase64, {
       method: 'POST',
       headers: {

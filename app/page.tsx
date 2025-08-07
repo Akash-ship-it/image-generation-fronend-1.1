@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { generateImage, ImageGenerationRequest, ImageGenerationResponse } from '@/lib/api';
+import { generateImage, ImageGenerationRequest, ImageGenerationResponse, LikedImage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,12 +54,11 @@ export default function Home() {
   // const [steps, setSteps] = useState([30]);
   // const [guidance, setGuidance] = useState([7.5]);
   const [steps, setSteps] = useState([28]);
-const [guidance, setGuidance] = useState([3.5]);
+  const [guidance, setGuidance] = useState([3.5]);
   const [width, setWidth] = useState([1024]);
   const [height, setHeight] = useState([1024]);
   const [seed, setSeed] = useState(-1);
   const [copied, setCopied] = useState(false);
-  const [liked, setLiked] = useState(false);
   const [progress, setProgress] = useState(0);
   const [theme, setTheme] = useState('dark');
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -68,7 +67,67 @@ const [guidance, setGuidance] = useState([3.5]);
   const [error, setError] = useState('');
   const [generatedImage, setGeneratedImage] = useState<any>(null);
 
+  const [likedImages, setLikedImages] = useState<LikedImage[]>([]);
+
+
   const [isClient, setIsClient] = useState(false);
+
+  // Load liked images from localStorage on component mount
+  useEffect(() => {
+    setIsClient(true);
+    // Apply theme to document
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+
+    // Load liked images from localStorage
+    const savedLikedImages = localStorage.getItem('chitrakar-liked-images');
+    if (savedLikedImages) {
+      try {
+        const parsed = JSON.parse(savedLikedImages);
+        setLikedImages(parsed);
+      } catch (error) {
+        console.error('Error loading liked images:', error);
+        localStorage.removeItem('chitrakar-liked-images');
+      }
+    }
+  }, []);
+
+  // Save liked images to localStorage whenever likedImages changes
+  useEffect(() => {
+    if (isClient && likedImages.length >= 0) {
+      localStorage.setItem('chitrakar-liked-images', JSON.stringify(likedImages));
+    }
+  }, [likedImages, isClient]);
+
+  // Check if current image is liked
+  const isCurrentImageLiked = generatedImage && likedImages.some(img => img.cloudinary_url === generatedImage.cloudinary_url);
+
+  // Toggle like for current image
+  const toggleLike = () => {
+    if (!generatedImage) return;
+
+    const imageId = generatedImage.cloudinary_url;
+    const isLiked = likedImages.some(img => img.cloudinary_url === imageId);
+
+    if (isLiked) {
+      // Remove from liked images
+      setLikedImages(prev => prev.filter(img => img.cloudinary_url !== imageId));
+    } else {
+      // Add to liked images
+      const newLikedImage: LikedImage = {
+        id: Date.now().toString(),
+        cloudinary_url: generatedImage.cloudinary_url,
+        prompt: generatedImage.prompt,
+        timestamp: Date.now()
+      };
+      setLikedImages(prev => [newLikedImage, ...prev.slice(0, 5)]); // Keep only 6 most recent
+    }
+  };
+
+  // Remove image from liked images
+  const removeLikedImage = (imageUrl: string) => {
+    setLikedImages(prev => prev.filter(img => img.cloudinary_url !== imageUrl));
+  };
+
 
   useEffect(() => {
     setIsClient(true);
@@ -143,20 +202,19 @@ const [guidance, setGuidance] = useState([3.5]);
     setSeed(Math.floor(Math.random() * 1000000));
   };
 
-const resetToDefaults = () => {
-  setPrompt('');
-  setNegativePrompt('');
-  setSteps([28]); // Changed from [30]
-  setGuidance([3.5]); // Changed from [7.5]
-  setWidth([1024]);
-  setHeight([1024]);
-  setSeed(-1);
-  setError('');
-  setGeneratedImage(null);
-  setProgress(0);
-  setCopied(false);
-  setLiked(false);
-};
+  const resetToDefaults = () => {
+    setPrompt('');
+    setNegativePrompt('');
+    setSteps([28]); // Changed from [30]
+    setGuidance([3.5]); // Changed from [7.5]
+    setWidth([1024]);
+    setHeight([1024]);
+    setSeed(-1);
+    setError('');
+    setGeneratedImage(null);
+    setProgress(0);
+    setCopied(false);
+  };
 
   const downloadImage = async () => {
     if (!generatedImage?.cloudinary_url) return;
@@ -461,47 +519,47 @@ const resetToDefaults = () => {
                         </div>
 
                         {/* Quality Preset */}
-                     <div className="space-y-4">
-  <Label className="text-base font-semibold">Quality</Label>
-  <div className="grid grid-cols-1 gap-2">
-    <Button
-      type="button"
-      variant={steps[0] === 20 ? "default" : "outline"}
-      className="justify-between"
-      onClick={() => {
-        setSteps([20]);
-        setGuidance([3.0]);
-      }}
-    >
-      <span>⚡ Fast</span>
-      <span className="text-xs">20 steps</span>
-    </Button>
-    <Button
-      type="button"
-      variant={steps[0] === 28 ? "default" : "outline"}
-      className="justify-between"
-      onClick={() => {
-        setSteps([28]);
-        setGuidance([3.5]);
-      }}
-    >
-      <span>⚖️ Balanced</span>
-      <span className="text-xs">28 steps</span>
-    </Button>
-    <Button
-      type="button"
-      variant={steps[0] === 40 ? "default" : "outline"}
-      className="justify-between"
-      onClick={() => {
-        setSteps([40]);
-        setGuidance([4.0]);
-      }}
-    >
-      <span>💎 Premium</span>
-      <span className="text-xs">40 steps</span>
-    </Button>
-  </div>
-</div>
+                        <div className="space-y-4">
+                          <Label className="text-base font-semibold">Quality</Label>
+                          <div className="grid grid-cols-1 gap-2">
+                            <Button
+                              type="button"
+                              variant={steps[0] === 20 ? "default" : "outline"}
+                              className="justify-between"
+                              onClick={() => {
+                                setSteps([20]);
+                                setGuidance([3.0]);
+                              }}
+                            >
+                              <span>⚡ Fast</span>
+                              <span className="text-xs">20 steps</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={steps[0] === 28 ? "default" : "outline"}
+                              className="justify-between"
+                              onClick={() => {
+                                setSteps([28]);
+                                setGuidance([3.5]);
+                              }}
+                            >
+                              <span>⚖️ Balanced</span>
+                              <span className="text-xs">28 steps</span>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={steps[0] === 40 ? "default" : "outline"}
+                              className="justify-between"
+                              onClick={() => {
+                                setSteps([40]);
+                                setGuidance([4.0]);
+                              }}
+                            >
+                              <span>💎 Premium</span>
+                              <span className="text-xs">40 steps</span>
+                            </Button>
+                          </div>
+                        </div>
 
                       </TabsContent>
 
@@ -694,7 +752,7 @@ const resetToDefaults = () => {
 
             {/* Image Display Panel */}
             <div className="xl:col-span-2">
-              <Card className="shadow-2xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl h-full">
+              <Card className="shadow-2xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -713,10 +771,10 @@ const resetToDefaults = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setLiked(!liked)}
-                          className={liked ? "text-red-500" : ""}
+                          onClick={toggleLike} // ✅ FIX: Call toggleLike function
+                          className={isCurrentImageLiked ? "text-red-500" : ""} // ✅ FIX: Use isCurrentImageLiked
                         >
-                          <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+                          <Heart className={`h-4 w-4 ${isCurrentImageLiked ? "fill-current" : ""}`} />
                         </Button>
                         <Button variant="ghost" size="sm">
                           <Share2 className="h-4 w-4" />
@@ -905,7 +963,139 @@ const resetToDefaults = () => {
                   )}
                 </CardContent>
               </Card>
+
+              <Card className="shadow-xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl mt-6">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Heart className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Liked Creations</CardTitle>
+                        <CardDescription>
+                          Your favorite generated artwork {likedImages.length > 0 ? `(${likedImages.length} saved)` : ''}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    {likedImages.length > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {likedImages.length}/6
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {likedImages.length > 0 ? (
+                    <>
+                      {/* Dynamic grid that adjusts based on number of images */}
+                      <div className={`grid gap-3 ${likedImages.length === 1 ? 'grid-cols-1 max-w-sm mx-auto' :
+                        likedImages.length === 2 ? 'grid-cols-2 max-w-md mx-auto' :
+                          likedImages.length <= 4 ? 'grid-cols-2' :
+                            'grid-cols-3'
+                        }`}>
+                        {likedImages.slice(0, 6).map((image, index) => (
+                          <div
+                            key={image.id}
+                            className="group relative aspect-square bg-gradient-to-br from-muted/30 to-muted/60 rounded-lg overflow-hidden border hover:border-primary/60 transition-all duration-300 cursor-pointer hover:shadow-lg"
+                          >
+                            <img
+                              src={image.cloudinary_url}
+                              alt={image.prompt}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              onClick={() => {
+                                setGeneratedImage(image);
+                                setIsImageModalOpen(true);
+                              }}
+                            />
+                            {/* Overlay with actions */}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-8 w-8 p-0 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 shadow-lg"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setGeneratedImage(image);
+                                    setIsImageModalOpen(true);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-8 w-8 p-0 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 shadow-lg"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeLikedImage(image.cloudinary_url);
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            {/* Image timestamp badge */}
+                            <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <Badge variant="secondary" className="text-xs bg-black/50 text-white border-0">
+                                {new Date(image.timestamp).toLocaleDateString()}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Action buttons for liked images */}
+                      <div className="mt-6 flex items-center justify-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLikedImages([])}
+                          className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950 hover:border-red-300 transition-all duration-200"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Clear All
+                        </Button>
+                        {likedImages.length === 6 && (
+                          <Badge variant="outline" className="text-xs bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-300">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Collection Full
+                          </Badge>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    /* Empty state - clean and encouraging */
+                    <div className="text-center py-12">
+                      <div className="relative mx-auto h-20 w-20 mb-6">
+                        <div className="absolute inset-0 bg-primary/5 rounded-full"></div>
+                        <div className="absolute inset-2 bg-primary/10 rounded-full"></div>
+                        <Heart className="absolute inset-0 h-full w-full text-primary/30 p-5" />
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="text-lg font-semibold text-foreground">No favorites yet</h4>
+                        <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                          Start creating amazing images and click the heart icon to save your favorites here
+                        </p>
+                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
+                          <div className="flex items-center gap-1 px-3 py-1 bg-red-50 dark:bg-red-950/30 rounded-full">
+                            <Heart className="h-3 w-3 text-red-500" />
+                            <span>Click to like</span>
+                          </div>
+                          <span>→</span>
+                          <div className="flex items-center gap-1 px-3 py-1 bg-primary/10 rounded-full">
+                            <Eye className="h-3 w-3 text-primary" />
+                            <span>Appears here</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
+
           </div>
 
           {/* Bottom Stats Section */}
@@ -997,10 +1187,11 @@ const resetToDefaults = () => {
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => setLiked(!liked)}
-                            className={`backdrop-blur-sm shadow-lg ${liked ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800" : "bg-white/90 dark:bg-gray-900/90"}`}
+                            onClick={toggleLike} // ✅ FIX: Call toggleLike function
+                            className={`backdrop-blur-sm shadow-lg ${isCurrentImageLiked ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800" : "bg-white/90 dark:bg-gray-900/90"
+                              }`}
                           >
-                            <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+                            <Heart className={`h-4 w-4 ${isCurrentImageLiked ? "fill-current" : ""}`} />
                           </Button>
                           <Button
                             size="sm"
@@ -1056,14 +1247,12 @@ const resetToDefaults = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setLiked(!liked)}
-                        className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${liked
-                          ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
-                          : "hover:bg-muted/80"
+                        onClick={toggleLike} // ✅ FIX: Call toggleLike function
+                        className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${isCurrentImageLiked ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900" : "hover:bg-muted/80"
                           }`}
                       >
-                        <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${liked ? "fill-current" : ""}`} />
-                        <span>{liked ? "Liked" : "Like"}</span>
+                        <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isCurrentImageLiked ? "fill-current" : ""}`} />
+                        <span>{isCurrentImageLiked ? "Liked" : "Like"}</span>
                       </Button>
                       <Button
                         variant="outline"
