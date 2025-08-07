@@ -1094,6 +1094,40 @@ export default function Home() {
                   )}
                 </CardContent>
               </Card>
+
+              <Card className="shadow-xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl mt-6">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-500/10 rounded-lg">
+                      <Sparkles className="h-5 w-5 text-amber-500" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Pro Tips</CardTitle>
+                      <CardDescription>Get better results with these tricks</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { icon: Wand2, title: "Be Specific", tip: "Use detailed descriptions for better results" },
+                      { icon: Palette, title: "Style Keywords", tip: "Add 'cinematic', 'oil painting', or '8k resolution'" },
+                      { icon: Eye, title: "Composition", tip: "Mention camera angles and lighting conditions" },
+                      { icon: Zap, title: "Quality Boost", tip: "Higher steps = better quality but slower generation" }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                        <div className="p-1.5 bg-primary/10 rounded-md flex-shrink-0">
+                          <item.icon className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">{item.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{item.tip}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
           </div>
