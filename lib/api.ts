@@ -256,8 +256,8 @@ export async function testConnection(): Promise<boolean> {
       prompt: "test image",
       width: 512,
       height: 512,
-      num_inference_steps: 10,
-      guidance_scale: 7.5
+      num_inference_steps: 28, // Changed from 10
+      guidance_scale: 3.5 // Changed from 7.5
     };
 
     await generateImage(testRequest);

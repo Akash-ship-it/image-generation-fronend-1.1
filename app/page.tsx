@@ -51,8 +51,10 @@ import {
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
-  const [steps, setSteps] = useState([30]);
-  const [guidance, setGuidance] = useState([7.5]);
+  // const [steps, setSteps] = useState([30]);
+  // const [guidance, setGuidance] = useState([7.5]);
+  const [steps, setSteps] = useState([28]);
+const [guidance, setGuidance] = useState([3.5]);
   const [width, setWidth] = useState([1024]);
   const [height, setHeight] = useState([1024]);
   const [seed, setSeed] = useState(-1);
@@ -141,20 +143,20 @@ export default function Home() {
     setSeed(Math.floor(Math.random() * 1000000));
   };
 
-  const resetToDefaults = () => {
-    setPrompt('');
-    setNegativePrompt('');
-    setSteps([30]);
-    setGuidance([7.5]);
-    setWidth([1024]);
-    setHeight([1024]);
-    setSeed(-1);
-    setError('');
-    setGeneratedImage(null);
-    setProgress(0);
-    setCopied(false);
-    setLiked(false);
-  };
+const resetToDefaults = () => {
+  setPrompt('');
+  setNegativePrompt('');
+  setSteps([28]); // Changed from [30]
+  setGuidance([3.5]); // Changed from [7.5]
+  setWidth([1024]);
+  setHeight([1024]);
+  setSeed(-1);
+  setError('');
+  setGeneratedImage(null);
+  setProgress(0);
+  setCopied(false);
+  setLiked(false);
+};
 
   const downloadImage = async () => {
     if (!generatedImage?.cloudinary_url) return;
@@ -459,47 +461,48 @@ export default function Home() {
                         </div>
 
                         {/* Quality Preset */}
-                        <div className="space-y-4">
-                          <Label className="text-base font-semibold">Quality</Label>
-                          <div className="grid grid-cols-1 gap-2">
-                            <Button
-                              type="button"
-                              variant={steps[0] === 20 ? "default" : "outline"}
-                              className="justify-between"
-                              onClick={() => {
-                                setSteps([20]);
-                                setGuidance([5]);
-                              }}
-                            >
-                              <span>⚡ Fast</span>
-                              <span className="text-xs">20 steps</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={steps[0] === 30 ? "default" : "outline"}
-                              className="justify-between"
-                              onClick={() => {
-                                setSteps([30]);
-                                setGuidance([7.5]);
-                              }}
-                            >
-                              <span>⚖️ Balanced</span>
-                              <span className="text-xs">30 steps</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={steps[0] === 50 ? "default" : "outline"}
-                              className="justify-between"
-                              onClick={() => {
-                                setSteps([50]);
-                                setGuidance([10]);
-                              }}
-                            >
-                              <span>💎 Premium</span>
-                              <span className="text-xs">50 steps</span>
-                            </Button>
-                          </div>
-                        </div>
+                     <div className="space-y-4">
+  <Label className="text-base font-semibold">Quality</Label>
+  <div className="grid grid-cols-1 gap-2">
+    <Button
+      type="button"
+      variant={steps[0] === 20 ? "default" : "outline"}
+      className="justify-between"
+      onClick={() => {
+        setSteps([20]);
+        setGuidance([3.0]);
+      }}
+    >
+      <span>⚡ Fast</span>
+      <span className="text-xs">20 steps</span>
+    </Button>
+    <Button
+      type="button"
+      variant={steps[0] === 28 ? "default" : "outline"}
+      className="justify-between"
+      onClick={() => {
+        setSteps([28]);
+        setGuidance([3.5]);
+      }}
+    >
+      <span>⚖️ Balanced</span>
+      <span className="text-xs">28 steps</span>
+    </Button>
+    <Button
+      type="button"
+      variant={steps[0] === 40 ? "default" : "outline"}
+      className="justify-between"
+      onClick={() => {
+        setSteps([40]);
+        setGuidance([4.0]);
+      }}
+    >
+      <span>💎 Premium</span>
+      <span className="text-xs">40 steps</span>
+    </Button>
+  </div>
+</div>
+
                       </TabsContent>
 
                       <TabsContent value="advanced" className="space-y-6 mt-6">
