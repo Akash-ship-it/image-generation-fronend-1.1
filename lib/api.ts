@@ -153,10 +153,10 @@ export interface ImageBatchGenerationResponse {
 
 // Modal endpoint URLs - Use the exact URLs from your deployment
 const ENDPOINTS = {
-  generateImage: 'https://akashmore83386--image-generator-imagegenserver-generate--228f5a.modal.run',
-  generateImageBase64: 'https://akashmore83386--image-generator-imagegenserver-generate--461b77.modal.run',
-  generateImageBatch: 'https://akashmore83386--image-generator-imagegenserver-generate--9fb909.modal.run',
-  uploadToCloudinary: 'https://akashmore83386--image-generator-imagegenserver-upload-to-ee66a6.modal.run'
+  generateImage: 'https://akashmore41765--image-generator-imagegenserver-generate--a454cd.modal.run',
+  generateImageBase64: 'https://akashmore41765--image-generator-imagegenserver-generate--f8d7e2.modal.run',
+  generateImageBatch: 'https://akashmore41765--image-generator-imagegenserver-generate--39c1a5.modal.run',
+  uploadToCloudinary: 'https://akashmore41765--image-generator-imagegenserver-upload-to-461977.modal.run'
 };
 
 /**
