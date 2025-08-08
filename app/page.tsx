@@ -1160,172 +1160,165 @@ export default function Home() {
 
         {/* Image Modal */}
         {/* Image Modal */}
+        /* Image Modal - Replace the existing Dialog component */
         <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-          <DialogContent className="max-w-[95vw] w-full h-[95vh] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl md:h-[90vh] p-0 bg-background/98 dark:bg-gray-950/98 backdrop-blur-2xl border shadow-2xl overflow-hidden">
-            <div className="relative h-full w-full flex flex-col">
-              {/* Modal Header */}
-              <div className="flex items-start justify-between p-3 sm:p-4 lg:p-6 border-b border-border/20 bg-gradient-to-r from-background/50 to-muted/20">
-                <div className="flex-1 min-w-0 pr-3 sm:pr-4">
-                  <DialogTitle className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-foreground mb-1 sm:mb-2 flex items-center gap-2">
-                    <div className="p-1 sm:p-1.5 bg-primary/10 rounded-lg">
-                      <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-primary" />
+          <DialogContent className="max-w-[95vw] w-full max-h-[95vh] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl p-0 bg-background/98 dark:bg-gray-950/98 backdrop-blur-2xl border shadow-2xl overflow-hidden flex flex-col">
+            {/* Modal Header - Fixed height */}
+            <div className="flex items-start justify-between p-3 sm:p-4 lg:p-6 border-b border-border/20 bg-gradient-to-r from-background/50 to-muted/20 flex-shrink-0">
+              <div className="flex-1 min-w-0 pr-3 sm:pr-4">
+                <DialogTitle className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold text-foreground mb-1 sm:mb-2 flex items-center gap-2">
+                  <div className="p-1 sm:p-1.5 bg-primary/10 rounded-lg">
+                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-primary" />
+                  </div>
+                  ChitraKar Generated Image
+                </DialogTitle>
+                <p className="text-xs sm:text-sm lg:text-base text-muted-foreground line-clamp-2 leading-relaxed">
+                  {generatedImage?.prompt || "Your ChitraKar generated masterpiece"}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <Button
+                  onClick={downloadImage}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
+                >
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline lg:inline">Download</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Modal Body - Flexible height with scroll */}
+            <div className="flex-1 overflow-hidden bg-gradient-to-br from-muted/10 via-background to-muted/20 min-h-0">
+              <div className="h-full w-full p-2 sm:p-4 lg:p-6 flex items-center justify-center">
+                {generatedImage && (
+                  <div className="relative w-full h-full flex items-center justify-center group">
+                    <div className="relative overflow-hidden rounded-lg sm:rounded-xl shadow-2xl bg-white dark:bg-gray-900 p-1 sm:p-2 max-w-full max-h-full">
+                      <img
+                        src={generatedImage.cloudinary_url}
+                        alt={generatedImage.prompt}
+                        className="w-full h-full object-contain rounded-md sm:rounded-lg"
+                        style={{
+                          maxHeight: 'calc(95vh - 240px)', // Reduced from 120px to account for header and footer
+                          maxWidth: '100%'
+                        }}
+                      />
+                      {/* Image overlay for aesthetic effect */}
+                      <div className="absolute inset-1 sm:inset-2 rounded-md sm:rounded-lg bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     </div>
-                    ChitraKar Generated Image
-                  </DialogTitle>
-                  <p className="text-xs sm:text-sm lg:text-base text-muted-foreground line-clamp-2 leading-relaxed">
-                    {generatedImage?.prompt || "Your ChitraKar generated masterpiece"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                  <Button
-                    onClick={downloadImage}
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 text-xs sm:text-sm"
-                  >
-                    <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline lg:inline">Download</span>
-                  </Button>
-                  <Button
-                    onClick={() => setIsImageModalOpen(false)}
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-muted/80"
-                  >
-                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-              </div>
 
-              {/* Modal Body */}
-              <div className="flex-1 overflow-hidden bg-gradient-to-br from-muted/10 via-background to-muted/20">
-                <div className="h-full w-full p-2 sm:p-4 lg:p-6">
-                  <div className="h-full w-full flex items-center justify-center">
-                    {generatedImage && (
-                      <div className="relative w-full h-full flex items-center justify-center group">
-                        <div className="relative overflow-hidden rounded-lg sm:rounded-xl shadow-2xl bg-white dark:bg-gray-900 p-1 sm:p-2 max-w-full max-h-full">
-                          <img
-                            src={generatedImage.cloudinary_url}
-                            alt={generatedImage.prompt}
-                            className="w-full h-full object-contain rounded-md sm:rounded-lg"
-                            style={{
-                              maxHeight: 'calc(95vh - 120px)',
-                              maxWidth: '100%'
-                            }}
-                          />
-                          {/* Image overlay for aesthetic effect */}
-                          <div className="absolute inset-1 sm:inset-2 rounded-md sm:rounded-lg bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                        </div>
-
-                        {/* Floating action buttons - only show on larger screens */}
-                        <div className="hidden lg:flex absolute top-4 right-4 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={toggleLike} // ✅ FIX: Call toggleLike function
-                            className={`backdrop-blur-sm shadow-lg ${isCurrentImageLiked ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800" : "bg-white/90 dark:bg-gray-900/90"
-                              }`}
-                          >
-                            <Heart className={`h-4 w-4 ${isCurrentImageLiked ? "fill-current" : ""}`} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={copyToClipboard}
-                            className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 shadow-lg"
-                          >
-                            {copied ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="border-t border-border/20 bg-gradient-to-r from-background/80 to-muted/40 backdrop-blur-sm">
-                <div className="p-3 sm:p-4 lg:p-6">
-                  {/* Generation Details */}
-                  <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 sm:mb-4">
-                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
-                      <ImageIcon className="h-3 w-3 mr-1" />
-                      {width[0]}×{height[0]}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
-                      <Settings className="h-3 w-3 mr-1" />
-                      {steps[0]} steps
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
-                      <Wand2 className="h-3 w-3 mr-1" />
-                      Guidance: {guidance[0]}
-                    </Badge>
-                    {seed !== -1 && (
-                      <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
-                        <Shuffle className="h-3 w-3 mr-1" />
-                        Seed: {seed}
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                      Generated
-                    </Badge>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-1 sm:gap-2 flex-wrap w-full sm:w-auto">
+                    {/* Floating action buttons - only show on larger screens */}
+                    <div className="hidden lg:flex absolute top-4 right-4 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                       <Button
-                        variant="outline"
                         size="sm"
-                        onClick={toggleLike} // ✅ FIX: Call toggleLike function
-                        className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${isCurrentImageLiked ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900" : "hover:bg-muted/80"
+                        variant="secondary"
+                        onClick={toggleLike}
+                        className={`backdrop-blur-sm shadow-lg ${isCurrentImageLiked
+                            ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800"
+                            : "bg-white/90 dark:bg-gray-900/90"
                           }`}
                       >
-                        <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isCurrentImageLiked ? "fill-current" : ""}`} />
-                        <span>{isCurrentImageLiked ? "Liked" : "Like"}</span>
+                        <Heart className={`h-4 w-4 ${isCurrentImageLiked ? "fill-current" : ""}`} />
                       </Button>
                       <Button
-                        variant="outline"
                         size="sm"
+                        variant="secondary"
                         onClick={copyToClipboard}
-                        className="hover:bg-blue-50 dark:hover:bg-blue-950 hover:border-blue-200 transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none"
+                        className="backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 shadow-lg"
                       >
                         {copied ? (
-                          <>
-                            <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-green-500" />
-                            <span className="text-green-600">Copied!</span>
-                          </>
+                          <Check className="h-4 w-4 text-green-500" />
                         ) : (
-                          <>
-                            <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                            <span>Copy Link</span>
-                          </>
+                          <Copy className="h-4 w-4" />
                         )}
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="hover:bg-purple-50 dark:hover:bg-purple-950 hover:border-purple-200 transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none"
-                      >
-                        <Share2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span>Share</span>
-                      </Button>
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
-                    {/* Generation Stats */}
-                    <div className="flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground w-full sm:w-auto justify-center sm:justify-end">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span>Generated in {Math.floor(Math.random() * 30 + 15)}s</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 text-yellow-500" />
-                        <span>{Math.floor(Math.random() * 20 + 80)}% Quality</span>
-                      </div>
+            {/* Modal Footer - Fixed height, always visible */}
+            <div className="border-t border-border/20 bg-gradient-to-r from-background/80 to-muted/40 backdrop-blur-sm flex-shrink-0">
+              <div className="p-3 sm:p-4 lg:p-6">
+                {/* Generation Details */}
+                <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3 sm:mb-4">
+                  <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                    <ImageIcon className="h-3 w-3 mr-1" />
+                    {width[0]}×{height[0]}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                    <Settings className="h-3 w-3 mr-1" />
+                    {steps[0]} steps
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                    <Wand2 className="h-3 w-3 mr-1" />
+                    Guidance: {guidance[0]}
+                  </Badge>
+                  {seed !== -1 && (
+                    <Badge variant="secondary" className="text-xs font-medium px-2 py-1">
+                      <Shuffle className="h-3 w-3 mr-1" />
+                      Seed: {seed}
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                    Generated
+                  </Badge>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleLike}
+                      className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${isCurrentImageLiked
+                          ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
+                          : "hover:bg-muted/80"
+                        }`}
+                    >
+                      <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isCurrentImageLiked ? "fill-current" : ""}`} />
+                      <span>{isCurrentImageLiked ? "Liked" : "Like"}</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={copyToClipboard}
+                      className="hover:bg-blue-50 dark:hover:bg-blue-950 hover:border-blue-200 transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-green-500" />
+                          <span className="text-green-600">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                          <span>Copy Link</span>
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hover:bg-purple-50 dark:hover:bg-purple-950 hover:border-purple-200 transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none"
+                    >
+                      <Share2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span>Share</span>
+                    </Button>
+                  </div>
+
+                  {/* Generation Stats */}
+                  <div className="flex items-center gap-2 sm:gap-4 text-xs text-muted-foreground w-full sm:w-auto justify-center sm:justify-end">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span>Generated in {Math.floor(Math.random() * 30 + 15)}s</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-500" />
+                      <span>{Math.floor(Math.random() * 20 + 80)}% Quality</span>
                     </div>
                   </div>
                 </div>
