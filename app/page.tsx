@@ -1159,8 +1159,6 @@ export default function Home() {
         </div>
 
         {/* Image Modal */}
-        {/* Image Modal */}
-        /* Image Modal - Replace the existing Dialog component */
         <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
           <DialogContent className="max-w-[95vw] w-full max-h-[95vh] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl p-0 bg-background/98 dark:bg-gray-950/98 backdrop-blur-2xl border shadow-2xl overflow-hidden flex flex-col">
             {/* Modal Header - Fixed height */}
