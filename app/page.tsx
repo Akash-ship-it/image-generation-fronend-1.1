@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useMemo, useCallback, memo } from 'react';
 import { generateImage, ImageGenerationRequest, ImageGenerationResponse, LikedImage } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,11 +48,129 @@ import {
   Monitor
 } from 'lucide-react';
 
+// ✅ Memoized QuickPrompt Component
+const QuickPromptButton = memo(({ item, onSelect }: { item: any, onSelect: (prompt: string) => void }) => (
+  <Button
+    type="button"
+    variant="ghost"
+    onClick={() => onSelect(item.prompt)}
+    className="h-auto p-4 text-left hover:bg-accent/80 transition-all duration-200 group border border-transparent hover:border-border/50"
+  >
+    <div className="flex items-start gap-3 w-full">
+      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+        <item.icon className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="font-semibold text-sm">{item.title}</div>
+          <Badge variant="secondary" className="text-xs px-2 py-0">
+            {item.category}
+          </Badge>
+        </div>
+        <div className="text-xs text-muted-foreground mb-2">
+          {item.description}
+        </div>
+        <div className="text-xs text-muted-foreground line-clamp-2">
+          {item.prompt.slice(0, 80)}...
+        </div>
+      </div>
+    </div>
+  </Button>
+));
+
+// ✅ Memoized LikedImage Component
+const LikedImageCard = memo(({ 
+  image, 
+  index, 
+  totalImages, 
+  onView, 
+  onRemove 
+}: { 
+  image: LikedImage, 
+  index: number, 
+  totalImages: number, 
+  onView: (image: LikedImage) => void, 
+  onRemove: (url: string) => void 
+}) => (
+  <div
+    className="group relative aspect-square bg-gradient-to-br from-muted/30 to-muted/60 rounded-lg overflow-hidden border hover:border-primary/60 transition-all duration-300 cursor-pointer hover:shadow-lg"
+  >
+    <img
+      src={image.cloudinary_url}
+      alt={image.prompt}
+      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+      onClick={() => onView(image)}
+      loading="lazy" // ✅ Lazy loading for performance
+    />
+    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-8 w-8 p-0 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(image);
+          }}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-8 w-8 p-0 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 shadow-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(image.cloudinary_url);
+          }}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+    <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <Badge variant="secondary" className="text-xs bg-black/50 text-white border-0">
+        {new Date(image.timestamp).toLocaleDateString()}
+      </Badge>
+    </div>
+  </div>
+));
+
+// ✅ Memoized Theme Toggle Component
+const ThemeToggle = memo(({ theme, onThemeChange }: { theme: string, onThemeChange: (theme: string) => void }) => (
+  <div className="absolute top-4 right-4">
+    <div className="flex items-center bg-background/80 dark:bg-gray-900/80 backdrop-blur-xl border border-border/50 rounded-full p-1 shadow-lg">
+      <Button
+        variant={theme === 'light' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => onThemeChange('light')}
+        className="rounded-full h-8 w-8 p-0"
+      >
+        <Sun className="h-4 w-4" />
+      </Button>
+      <Button
+        variant={theme === 'dark' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => onThemeChange('dark')}
+        className="rounded-full h-8 w-8 p-0"
+      >
+        <Moon className="h-4 w-4" />
+      </Button>
+      <Button
+        variant={theme === 'system' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => onThemeChange('system')}
+        className="rounded-full h-8 w-8 p-0"
+      >
+        <Monitor className="h-4 w-4" />
+      </Button>
+    </div>
+  </div>
+));
+
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
-  // const [steps, setSteps] = useState([30]);
-  // const [guidance, setGuidance] = useState([7.5]);
   const [steps, setSteps] = useState([28]);
   const [guidance, setGuidance] = useState([3.5]);
   const [width, setWidth] = useState([1024]);
@@ -62,193 +180,14 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [theme, setTheme] = useState('dark');
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedImage, setGeneratedImage] = useState<any>(null);
-
   const [likedImages, setLikedImages] = useState<LikedImage[]>([]);
-
-
   const [isClient, setIsClient] = useState(false);
 
-  // Load liked images from localStorage on component mount
-  useEffect(() => {
-    setIsClient(true);
-    // Apply theme to document
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-
-    // Load liked images from localStorage
-    const savedLikedImages = localStorage.getItem('chitrakar-liked-images');
-    if (savedLikedImages) {
-      try {
-        const parsed = JSON.parse(savedLikedImages);
-        setLikedImages(parsed);
-      } catch (error) {
-        console.error('Error loading liked images:', error);
-        localStorage.removeItem('chitrakar-liked-images');
-      }
-    }
-  }, []);
-
-  // Save liked images to localStorage whenever likedImages changes
-  useEffect(() => {
-    if (isClient && likedImages.length >= 0) {
-      localStorage.setItem('chitrakar-liked-images', JSON.stringify(likedImages));
-    }
-  }, [likedImages, isClient]);
-
-  // Check if current image is liked
-  const isCurrentImageLiked = generatedImage && likedImages.some(img => img.cloudinary_url === generatedImage.cloudinary_url);
-
-  // Toggle like for current image
-  const toggleLike = () => {
-    if (!generatedImage) return;
-
-    const imageId = generatedImage.cloudinary_url;
-    const isLiked = likedImages.some(img => img.cloudinary_url === imageId);
-
-    if (isLiked) {
-      // Remove from liked images
-      setLikedImages(prev => prev.filter(img => img.cloudinary_url !== imageId));
-    } else {
-      // Add to liked images
-      const newLikedImage: LikedImage = {
-        id: Date.now().toString(),
-        cloudinary_url: generatedImage.cloudinary_url,
-        prompt: generatedImage.prompt,
-        timestamp: Date.now()
-      };
-      setLikedImages(prev => [newLikedImage, ...prev.slice(0, 5)]); // Keep only 6 most recent
-    }
-  };
-
-  // Remove image from liked images
-  const removeLikedImage = (imageUrl: string) => {
-    setLikedImages(prev => prev.filter(img => img.cloudinary_url !== imageUrl));
-  };
-
-
-  useEffect(() => {
-    setIsClient(true);
-    // Apply theme to document
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
-
-  const toggleTheme = (newTheme: string) => {
-    setTheme(newTheme);
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!prompt.trim()) {
-      setError('Please enter a prompt');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-    setGeneratedImage(null);
-    setProgress(0);
-
-    // Simulate progress for better UX
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return prev;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 1000);
-
-    try {
-      const request = {
-        prompt: prompt.trim(),
-        negative_prompt: negativePrompt.trim() || undefined,
-        num_inference_steps: steps[0],
-        guidance_scale: guidance[0],
-        width: width[0],
-        height: height[0],
-        seed: seed === -1 ? undefined : seed,
-      };
-
-      const response = await generateImage(request);
-      setProgress(100);
-      setTimeout(() => setGeneratedImage(response), 500);
-    } catch (err) {
-      console.error('Image generation error:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      clearInterval(progressInterval);
-      setTimeout(() => {
-        setIsLoading(false);
-        setProgress(0);
-      }, 500);
-    }
-  };
-
-  const handleQuickPrompt = (quickPrompt: string) => {
-    setPrompt(quickPrompt);
-    setError('');
-  };
-
-  const generateRandomSeed = () => {
-    setSeed(Math.floor(Math.random() * 1000000));
-  };
-
-  const resetToDefaults = () => {
-    setPrompt('');
-    setNegativePrompt('');
-    setSteps([28]); // Changed from [30]
-    setGuidance([3.5]); // Changed from [7.5]
-    setWidth([1024]);
-    setHeight([1024]);
-    setSeed(-1);
-    setError('');
-    setGeneratedImage(null);
-    setProgress(0);
-    setCopied(false);
-  };
-
-  const downloadImage = async () => {
-    if (!generatedImage?.cloudinary_url) return;
-
-    try {
-      const response = await fetch(generatedImage.cloudinary_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `ai-generated-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Download failed:', error);
-    }
-  };
-
-  const copyToClipboard = async () => {
-    if (generatedImage?.cloudinary_url) {
-      await navigator.clipboard.writeText(generatedImage.cloudinary_url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const openImageModal = () => {
-    setIsImageModalOpen(true);
-  };
-
-  const quickPrompts = [
+  // ✅ Memoized constants - prevents recreation on every render
+  const quickPrompts = useMemo(() => [
     {
       icon: Castle,
       title: "Epic Fantasy",
@@ -291,14 +230,222 @@ export default function Home() {
       prompt: "A beautiful still life painting in classical oil painting style, vintage flowers in ornate vase, warm lighting, renaissance aesthetic",
       category: "classical"
     }
-  ];
+  ], []);
 
-  const aspectRatios = [
+  const aspectRatios = useMemo(() => [
     { name: "Square", width: 1024, height: 1024, icon: "⬜" },
     { name: "Portrait", width: 768, height: 1024, icon: "📱" },
     { name: "Landscape", width: 1024, height: 768, icon: "🖼️" },
     { name: "Wide", width: 1536, height: 768, icon: "📺" }
-  ];
+  ], []);
+
+  // ✅ Optimized localStorage operations with debouncing
+  useEffect(() => {
+    setIsClient(true);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+
+    // ✅ Async localStorage read to prevent blocking
+    const loadLikedImages = async () => {
+      try {
+        const savedLikedImages = localStorage.getItem('chitrakar-liked-images');
+        if (savedLikedImages) {
+          const parsed = JSON.parse(savedLikedImages);
+          setLikedImages(parsed);
+        }
+      } catch (error) {
+        console.error('Error loading liked images:', error);
+        localStorage.removeItem('chitrakar-liked-images');
+      }
+    };
+
+    loadLikedImages();
+  }, [theme]);
+
+  // ✅ Debounced localStorage save
+  useEffect(() => {
+    if (!isClient) return;
+
+    const timeoutId = setTimeout(() => {
+      try {
+        localStorage.setItem('chitrakar-liked-images', JSON.stringify(likedImages));
+      } catch (error) {
+        console.error('Error saving liked images:', error);
+      }
+    }, 500); // Debounce saves by 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [likedImages, isClient]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
+  // ✅ Memoized computed values
+  const isCurrentImageLiked = useMemo(() => 
+    generatedImage && likedImages.some(img => img.cloudinary_url === generatedImage.cloudinary_url),
+    [generatedImage, likedImages]
+  );
+
+  const likedImagesGridClass = useMemo(() => {
+    const count = likedImages.length;
+    if (count === 1) return 'grid-cols-1 max-w-sm mx-auto';
+    if (count === 2) return 'grid-cols-2 max-w-md mx-auto';
+    if (count <= 4) return 'grid-cols-2';
+    return 'grid-cols-3';
+  }, [likedImages.length]);
+
+  // ✅ Optimized callback functions using useCallback
+  const handleQuickPrompt = useCallback((quickPrompt: string) => {
+    setPrompt(quickPrompt);
+    setError('');
+  }, []);
+
+  const toggleTheme = useCallback((newTheme: string) => {
+    setTheme(newTheme);
+  }, []);
+
+  const generateRandomSeed = useCallback(() => {
+    setSeed(Math.floor(Math.random() * 1000000));
+  }, []);
+
+  const resetToDefaults = useCallback(() => {
+    setPrompt('');
+    setNegativePrompt('');
+    setSteps([28]);
+    setGuidance([3.5]);
+    setWidth([1024]);
+    setHeight([1024]);
+    setSeed(-1);
+    setError('');
+    setGeneratedImage(null);
+    setProgress(0);
+    setCopied(false);
+  }, []);
+
+  const toggleLike = useCallback(() => {
+    if (!generatedImage) return;
+
+    const imageId = generatedImage.cloudinary_url;
+    const isLiked = likedImages.some(img => img.cloudinary_url === imageId);
+
+    if (isLiked) {
+      setLikedImages(prev => prev.filter(img => img.cloudinary_url !== imageId));
+    } else {
+      const newLikedImage: LikedImage = {
+        id: Date.now().toString(),
+        cloudinary_url: generatedImage.cloudinary_url,
+        prompt: generatedImage.prompt,
+        timestamp: Date.now()
+      };
+      setLikedImages(prev => [newLikedImage, ...prev.slice(0, 5)]);
+    }
+  }, [generatedImage, likedImages]);
+
+  const removeLikedImage = useCallback((imageUrl: string) => {
+    setLikedImages(prev => prev.filter(img => img.cloudinary_url !== imageUrl));
+  }, []);
+
+  const downloadImage = useCallback(async () => {
+    if (!generatedImage?.cloudinary_url) return;
+
+    try {
+      const response = await fetch(generatedImage.cloudinary_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `ai-generated-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  }, [generatedImage]);
+
+  const copyToClipboard = useCallback(async () => {
+    if (generatedImage?.cloudinary_url) {
+      await navigator.clipboard.writeText(generatedImage.cloudinary_url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [generatedImage]);
+
+  const openImageModal = useCallback(() => {
+    setIsImageModalOpen(true);
+  }, []);
+
+  const handleViewLikedImage = useCallback((image: LikedImage) => {
+    setGeneratedImage(image);
+    setIsImageModalOpen(true);
+  }, []);
+
+  const setAspectRatio = useCallback((ratio: { width: number, height: number }) => {
+    setWidth([ratio.width]);
+    setHeight([ratio.height]);
+  }, []);
+
+  const setQualityPreset = useCallback((stepsValue: number, guidanceValue: number) => {
+    setSteps([stepsValue]);
+    setGuidance([guidanceValue]);
+  }, []);
+
+  // ✅ Optimized form submission
+  const handleSubmit = useCallback(async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!prompt.trim()) {
+      setError('Please enter a prompt');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setGeneratedImage(null);
+    setProgress(0);
+
+    // ✅ RAF-based progress animation for smoother performance
+    let animationId: number;
+    const startTime = Date.now();
+    const animateProgress = () => {
+      const elapsed = Date.now() - startTime;
+      const newProgress = Math.min(90, (elapsed / 1000) * 30); // Reach 90% in ~3 seconds
+      setProgress(newProgress);
+      
+      if (newProgress < 90) {
+        animationId = requestAnimationFrame(animateProgress);
+      }
+    };
+    animationId = requestAnimationFrame(animateProgress);
+
+    try {
+      const request = {
+        prompt: prompt.trim(),
+        negative_prompt: negativePrompt.trim() || undefined,
+        num_inference_steps: steps[0],
+        guidance_scale: guidance[0],
+        width: width[0],
+        height: height[0],
+        seed: seed === -1 ? undefined : seed,
+      };
+
+      const response = await generateImage(request);
+      cancelAnimationFrame(animationId);
+      setProgress(100);
+      setTimeout(() => setGeneratedImage(response), 500);
+    } catch (err) {
+      cancelAnimationFrame(animationId);
+      console.error('Image generation error:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+        setProgress(0);
+      }, 500);
+    }
+  }, [prompt, negativePrompt, steps, guidance, width, height, seed]);
 
   return (
     <TooltipProvider>
@@ -308,35 +455,8 @@ export default function Home() {
           <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
           <div className="relative container mx-auto px-4 py-16">
             <div className="text-center space-y-6 max-w-4xl mx-auto">
-              {/* Theme Toggle */}
-              <div className="absolute top-4 right-4">
-                <div className="flex items-center bg-background/80 dark:bg-gray-900/80 backdrop-blur-xl border border-border/50 rounded-full p-1 shadow-lg">
-                  <Button
-                    variant={theme === 'light' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => toggleTheme('light')}
-                    className="rounded-full h-8 w-8 p-0"
-                  >
-                    <Sun className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={theme === 'dark' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => toggleTheme('dark')}
-                    className="rounded-full h-8 w-8 p-0"
-                  >
-                    <Moon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={theme === 'system' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => toggleTheme('system')}
-                    className="rounded-full h-8 w-8 p-0"
-                  >
-                    <Monitor className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              {/* ✅ Memoized Theme Toggle */}
+              <ThemeToggle theme={theme} onThemeChange={toggleTheme} />
 
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="relative">
@@ -501,10 +621,7 @@ export default function Home() {
                                 type="button"
                                 variant={width[0] === ratio.width && height[0] === ratio.height ? "default" : "outline"}
                                 className="h-auto p-3 justify-start cursor-pointer"
-                                onClick={() => {
-                                  setWidth([ratio.width]);
-                                  setHeight([ratio.height]);
-                                }}
+                                onClick={() => setAspectRatio(ratio)}
                               >
                                 <span className="text-lg mr-2">{ratio.icon}</span>
                                 <div className="text-left">
@@ -526,10 +643,7 @@ export default function Home() {
                               type="button"
                               variant={steps[0] === 20 ? "default" : "outline"}
                               className="justify-between"
-                              onClick={() => {
-                                setSteps([20]);
-                                setGuidance([3.0]);
-                              }}
+                              onClick={() => setQualityPreset(20, 3.0)}
                             >
                               <span>⚡ Fast</span>
                               <span className="text-xs">20 steps</span>
@@ -538,10 +652,7 @@ export default function Home() {
                               type="button"
                               variant={steps[0] === 28 ? "default" : "outline"}
                               className="justify-between"
-                              onClick={() => {
-                                setSteps([28]);
-                                setGuidance([3.5]);
-                              }}
+                              onClick={() => setQualityPreset(28, 3.5)}
                             >
                               <span>⚖️ Balanced</span>
                               <span className="text-xs">28 steps</span>
@@ -550,17 +661,13 @@ export default function Home() {
                               type="button"
                               variant={steps[0] === 40 ? "default" : "outline"}
                               className="justify-between"
-                              onClick={() => {
-                                setSteps([40]);
-                                setGuidance([4.0]);
-                              }}
+                              onClick={() => setQualityPreset(40, 4.0)}
                             >
                               <span>💎 Premium</span>
                               <span className="text-xs">40 steps</span>
                             </Button>
                           </div>
                         </div>
-
                       </TabsContent>
 
                       <TabsContent value="advanced" className="space-y-6 mt-6">
@@ -703,7 +810,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Quick Prompts */}
+              {/* ✅ Optimized Quick Prompts with Memoized Components */}
               <Card className="shadow-xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -717,33 +824,11 @@ export default function Home() {
                 <CardContent>
                   <div className="grid grid-cols-1 gap-3">
                     {quickPrompts.map((item, index) => (
-                      <Button
-                        key={index}
-                        type="button"
-                        variant="ghost"
-                        onClick={() => handleQuickPrompt(item.prompt)}
-                        className="h-auto p-4 text-left hover:bg-accent/80 transition-all duration-200 group border border-transparent hover:border-border/50"
-                      >
-                        <div className="flex items-start gap-3 w-full">
-                          <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                            <item.icon className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="font-semibold text-sm">{item.title}</div>
-                              <Badge variant="secondary" className="text-xs px-2 py-0">
-                                {item.category}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground mb-2">
-                              {item.description}
-                            </div>
-                            <div className="text-xs text-muted-foreground line-clamp-2">
-                              {item.prompt.slice(0, 80)}...
-                            </div>
-                          </div>
-                        </div>
-                      </Button>
+                      <QuickPromptButton 
+                        key={index} 
+                        item={item} 
+                        onSelect={handleQuickPrompt} 
+                      />
                     ))}
                   </div>
                 </CardContent>
@@ -771,8 +856,8 @@ export default function Home() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={toggleLike} // ✅ FIX: Call toggleLike function
-                          className={isCurrentImageLiked ? "text-red-500" : ""} // ✅ FIX: Use isCurrentImageLiked
+                          onClick={toggleLike}
+                          className={isCurrentImageLiked ? "text-red-500" : ""}
                         >
                           <Heart className={`h-4 w-4 ${isCurrentImageLiked ? "fill-current" : ""}`} />
                         </Button>
@@ -813,6 +898,7 @@ export default function Home() {
                           alt={generatedImage.prompt}
                           className="w-full h-full object-contain hover:scale-105 transition-transform duration-500 cursor-pointer"
                           onClick={openImageModal}
+                          loading="eager" // ✅ Load main image immediately
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-2xl">
                           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -964,6 +1050,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
+              {/* ✅ Optimized Liked Images Section */}
               <Card className="shadow-xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl mt-6">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -988,61 +1075,17 @@ export default function Home() {
                 <CardContent>
                   {likedImages.length > 0 ? (
                     <>
-                      {/* Dynamic grid that adjusts based on number of images */}
-                      <div className={`grid gap-3 ${likedImages.length === 1 ? 'grid-cols-1 max-w-sm mx-auto' :
-                        likedImages.length === 2 ? 'grid-cols-2 max-w-md mx-auto' :
-                          likedImages.length <= 4 ? 'grid-cols-2' :
-                            'grid-cols-3'
-                        }`}>
+                      {/* ✅ Dynamic grid with memoized class */}
+                      <div className={`grid gap-3 ${likedImagesGridClass}`}>
                         {likedImages.slice(0, 6).map((image, index) => (
-                          <div
+                          <LikedImageCard
                             key={image.id}
-                            className="group relative aspect-square bg-gradient-to-br from-muted/30 to-muted/60 rounded-lg overflow-hidden border hover:border-primary/60 transition-all duration-300 cursor-pointer hover:shadow-lg"
-                          >
-                            <img
-                              src={image.cloudinary_url}
-                              alt={image.prompt}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              onClick={() => {
-                                setGeneratedImage(image);
-                                setIsImageModalOpen(true);
-                              }}
-                            />
-                            {/* Overlay with actions */}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="h-8 w-8 p-0 bg-white/90 dark:bg-gray-900/90 hover:bg-white dark:hover:bg-gray-800 shadow-lg"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setGeneratedImage(image);
-                                    setIsImageModalOpen(true);
-                                  }}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="h-8 w-8 p-0 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 shadow-lg"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeLikedImage(image.cloudinary_url);
-                                  }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            {/* Image timestamp badge */}
-                            <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <Badge variant="secondary" className="text-xs bg-black/50 text-white border-0">
-                                {new Date(image.timestamp).toLocaleDateString()}
-                              </Badge>
-                            </div>
-                          </div>
+                            image={image}
+                            index={index}
+                            totalImages={likedImages.length}
+                            onView={handleViewLikedImage}
+                            onRemove={removeLikedImage}
+                          />
                         ))}
                       </div>
 
@@ -1095,6 +1138,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
+              {/* Pro Tips Section */}
               <Card className="shadow-xl border-0 bg-card/50 dark:bg-gray-900/50 backdrop-blur-xl mt-6">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -1129,7 +1173,6 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
-
           </div>
 
           {/* Bottom Stats Section */}
@@ -1158,7 +1201,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Image Modal */}
+        {/* ✅ Optimized Image Modal */}
         <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
           <DialogContent className="max-w-[95vw] w-full max-h-[95vh] md:max-w-5xl lg:max-w-6xl xl:max-w-7xl p-0 bg-background/98 dark:bg-gray-950/98 backdrop-blur-2xl border shadow-2xl overflow-hidden flex flex-col">
             {/* Modal Header - Fixed height */}
@@ -1197,11 +1240,11 @@ export default function Home() {
                         alt={generatedImage.prompt}
                         className="w-full h-full object-contain rounded-md sm:rounded-lg"
                         style={{
-                          maxHeight: 'calc(95vh - 240px)', // Reduced from 120px to account for header and footer
+                          maxHeight: 'calc(95vh - 240px)',
                           maxWidth: '100%'
                         }}
+                        loading="eager" // ✅ Load modal image immediately
                       />
-                      {/* Image overlay for aesthetic effect */}
                       <div className="absolute inset-1 sm:inset-2 rounded-md sm:rounded-lg bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     </div>
 
@@ -1259,7 +1302,7 @@ export default function Home() {
                       Seed: {seed}
                     </Badge>
                   )}
-                  <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
+                                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                     Generated
                   </Badge>
@@ -1326,5 +1369,5 @@ export default function Home() {
         </Dialog>
       </div>
     </TooltipProvider>
-  )
+  );
 };
