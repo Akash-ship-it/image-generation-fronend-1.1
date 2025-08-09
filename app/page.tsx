@@ -42,11 +42,9 @@ import {
   RotateCcw,
   Camera,
   Brush,
-  X,
-  Sun,
-  Moon,
-  Monitor
+  X
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 // ✅ Memoized QuickPrompt Component
 const QuickPromptButton = memo(({ item, onSelect }: { item: any, onSelect: (prompt: string) => void }) => (
@@ -79,18 +77,18 @@ const QuickPromptButton = memo(({ item, onSelect }: { item: any, onSelect: (prom
 ));
 
 // ✅ Memoized LikedImage Component
-const LikedImageCard = memo(({ 
-  image, 
-  index, 
-  totalImages, 
-  onView, 
-  onRemove 
-}: { 
-  image: LikedImage, 
-  index: number, 
-  totalImages: number, 
-  onView: (image: LikedImage) => void, 
-  onRemove: (url: string) => void 
+const LikedImageCard = memo(({
+  image,
+  index,
+  totalImages,
+  onView,
+  onRemove
+}: {
+  image: LikedImage,
+  index: number,
+  totalImages: number,
+  onView: (image: LikedImage) => void,
+  onRemove: (url: string) => void
 }) => (
   <div
     className="group relative aspect-square bg-gradient-to-br from-muted/30 to-muted/60 rounded-lg overflow-hidden border hover:border-primary/60 transition-all duration-300 cursor-pointer hover:shadow-lg"
@@ -136,38 +134,6 @@ const LikedImageCard = memo(({
   </div>
 ));
 
-// ✅ Memoized Theme Toggle Component
-const ThemeToggle = memo(({ theme, onThemeChange }: { theme: string, onThemeChange: (theme: string) => void }) => (
-  <div className="absolute top-4 right-4">
-    <div className="flex items-center bg-background/80 dark:bg-gray-900/80 backdrop-blur-xl border border-border/50 rounded-full p-1 shadow-lg">
-      <Button
-        variant={theme === 'light' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onThemeChange('light')}
-        className="rounded-full h-8 w-8 p-0"
-      >
-        <Sun className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={theme === 'dark' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onThemeChange('dark')}
-        className="rounded-full h-8 w-8 p-0"
-      >
-        <Moon className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={theme === 'system' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onThemeChange('system')}
-        className="rounded-full h-8 w-8 p-0"
-      >
-        <Monitor className="h-4 w-4" />
-      </Button>
-    </div>
-  </div>
-));
-
 export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
@@ -178,13 +144,17 @@ export default function Home() {
   const [seed, setSeed] = useState(-1);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [theme, setTheme] = useState('dark');
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedImage, setGeneratedImage] = useState<any>(null);
   const [likedImages, setLikedImages] = useState<LikedImage[]>([]);
+  const [mounted, setMounted] = useState(false);
   const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // ✅ Memoized constants - prevents recreation on every render
   const quickPrompts = useMemo(() => [
@@ -241,10 +211,10 @@ export default function Home() {
 
   // ✅ Optimized localStorage operations with debouncing
   useEffect(() => {
-    setIsClient(true);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    if (!mounted) return; // Don't run until after hydration
 
-    // ✅ Async localStorage read to prevent blocking
+    setIsClient(true);
+
     const loadLikedImages = async () => {
       try {
         const savedLikedImages = localStorage.getItem('chitrakar-liked-images');
@@ -259,7 +229,8 @@ export default function Home() {
     };
 
     loadLikedImages();
-  }, [theme]);
+  }, [mounted]);
+
 
   // ✅ Debounced localStorage save
   useEffect(() => {
@@ -276,12 +247,8 @@ export default function Home() {
     return () => clearTimeout(timeoutId);
   }, [likedImages, isClient]);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
-
   // ✅ Memoized computed values
-  const isCurrentImageLiked = useMemo(() => 
+  const isCurrentImageLiked = useMemo(() =>
     generatedImage && likedImages.some(img => img.cloudinary_url === generatedImage.cloudinary_url),
     [generatedImage, likedImages]
   );
@@ -298,10 +265,6 @@ export default function Home() {
   const handleQuickPrompt = useCallback((quickPrompt: string) => {
     setPrompt(quickPrompt);
     setError('');
-  }, []);
-
-  const toggleTheme = useCallback((newTheme: string) => {
-    setTheme(newTheme);
   }, []);
 
   const generateRandomSeed = useCallback(() => {
@@ -413,7 +376,7 @@ export default function Home() {
       const elapsed = Date.now() - startTime;
       const newProgress = Math.min(90, (elapsed / 1000) * 30); // Reach 90% in ~3 seconds
       setProgress(newProgress);
-      
+
       if (newProgress < 90) {
         animationId = requestAnimationFrame(animateProgress);
       }
@@ -447,6 +410,14 @@ export default function Home() {
     }
   }, [prompt, negativePrompt, steps, guidance, width, height, seed]);
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background dark:bg-gray-950 transition-colors duration-300">
@@ -456,7 +427,9 @@ export default function Home() {
           <div className="relative container mx-auto px-4 py-16">
             <div className="text-center space-y-6 max-w-4xl mx-auto">
               {/* ✅ Memoized Theme Toggle */}
-              <ThemeToggle theme={theme} onThemeChange={toggleTheme} />
+              <div className="absolute top-4 right-4">
+                <ThemeToggle />
+              </div>
 
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="relative">
@@ -824,10 +797,10 @@ export default function Home() {
                 <CardContent>
                   <div className="grid grid-cols-1 gap-3">
                     {quickPrompts.map((item, index) => (
-                      <QuickPromptButton 
-                        key={index} 
-                        item={item} 
-                        onSelect={handleQuickPrompt} 
+                      <QuickPromptButton
+                        key={index}
+                        item={item}
+                        onSelect={handleQuickPrompt}
                       />
                     ))}
                   </div>
@@ -1255,8 +1228,8 @@ export default function Home() {
                         variant="secondary"
                         onClick={toggleLike}
                         className={`backdrop-blur-sm shadow-lg ${isCurrentImageLiked
-                            ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800"
-                            : "bg-white/90 dark:bg-gray-900/90"
+                          ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950 dark:border-red-800"
+                          : "bg-white/90 dark:bg-gray-900/90"
                           }`}
                       >
                         <Heart className={`h-4 w-4 ${isCurrentImageLiked ? "fill-current" : ""}`} />
@@ -1302,7 +1275,7 @@ export default function Home() {
                       Seed: {seed}
                     </Badge>
                   )}
-                                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
+                  <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 px-2 py-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                     Generated
                   </Badge>
@@ -1316,8 +1289,8 @@ export default function Home() {
                       size="sm"
                       onClick={toggleLike}
                       className={`transition-all duration-200 text-xs sm:text-sm flex-1 sm:flex-none ${isCurrentImageLiked
-                          ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
-                          : "hover:bg-muted/80"
+                        ? "text-red-600 border-red-200 bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:border-red-800 dark:hover:bg-red-900"
+                        : "hover:bg-muted/80"
                         }`}
                     >
                       <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isCurrentImageLiked ? "fill-current" : ""}`} />
